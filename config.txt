@@ -1,0 +1,14 @@
+thetai = 0   #Coloque o theta inicial
+thetaf = 70  #Coloque o theta final
+dtheta = 2  #Coloque a etapa do theta
+phii = 76  #Phi inicial
+phif = 120  #Phi final
+dphi = 4 #Etapa do phi
+symmetry = 1 # Coloque em 1 caso queira utilizar seus dados originais, 2 para realizar a simetrização.
+poli_tempo = 0.5 #tempo entre as plotagens do calculo da curva I0
+fft_tempo = 0.5 #tempo entre a plotagem da simetrização
+arquivo_saida = Jonder.txt #nome do arquivo experimental
+rotate_angle = 0 #ângulo de rotação
+~
+~
+
