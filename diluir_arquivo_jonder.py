@@ -99,7 +99,7 @@ try:
             'Intensity': 'intensity'
         })
 
-        output_file_name = f"../saidatpintensity_{comp}.txt"
+        output_file_name = f"saidatpintensity_{comp}.txt"
 
         # Salvar o arquivo
         df_to_save.to_csv(

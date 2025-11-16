@@ -72,7 +72,8 @@ def process_and_plot(input_file, output_file, plot_dir, phi_values_to_evaluate=N
         print(f"Verifique se o arquivo existe e não está vazio. Detalhe: {e}")
         return  # Sai da função se não conseguir ler
 
-
+    data = data[(data['phi'] >= phii) & (data['phi'] <= phif)]
+    print(f"Dados filtrados para o intervalo de Phi: {data['phi'].min()} a {data['phi'].max()}")
     # Agrupa os dados por theta
     grouped = data.groupby('theta')
     results = []
@@ -363,13 +364,11 @@ def process_file_for_plot(file_path, sigma=3, rotate_angle=0):
         df_rep5['Phi'] = 225 + df_rep5['Phi']
         df_rep6 = df_plot.copy();
         df_rep6['Phi'] = 270 + df_rep6['Phi']
-        df_rep7 = df_plot.copy();
-        df_rep7['Phi'] = 315 + df_rep7['Phi']
 
         # Juntar tudo
         df_plot = pd.concat([
             df_plot,
-            df_rep1, df_rep2, df_rep3, df_rep4, df_rep5, df_rep6, df_rep7
+            df_rep1, df_rep2, df_rep3, df_rep4, df_rep5, df_rep6
         ]).reset_index(drop=True)
 
     ### FIM DO NOVO BLOCO ###
@@ -434,41 +433,54 @@ def process_file_for_plot(file_path, sigma=3, rotate_angle=0):
 
     ### NOVO BLOCO (para 'df') ###
     if np.isclose(phi_interval, 44):
-        # (Lógica para fechar o loop)
-        first_values = df.groupby('Theta').first().reset_index()
-        df = df.groupby('Theta', group_keys=False).apply(lambda x: x.drop(x.index[0]))
-        last_values = df.groupby('Theta').last().reset_index()
-        last_values['Phi'] = first_values['Phi']
-        df = pd.concat([df, last_values], ignore_index=True)
+        print(f"Detectado intervalo de {phi_interval:.1f} graus. Aplicando replicação C8 (8-fold).")
 
-        # Marcar os blocos replicados como "não originais"
+
         df_rep1 = df.copy();
         df_rep1['Phi'] = 45 + df_rep1['Phi'];
         df_rep1['IsOriginal'] = False
+
+        # Réplica 2 (offset 90)
         df_rep2 = df.copy();
         df_rep2['Phi'] = 90 + df_rep2['Phi'];
         df_rep2['IsOriginal'] = False
+
+        # Réplica 3 (offset 135)
         df_rep3 = df.copy();
         df_rep3['Phi'] = 135 + df_rep3['Phi'];
         df_rep3['IsOriginal'] = False
+
+        # Réplica 4 (offset 180)
         df_rep4 = df.copy();
         df_rep4['Phi'] = 180 + df_rep4['Phi'];
         df_rep4['IsOriginal'] = False
+
+        # Réplica 5 (offset 225)
         df_rep5 = df.copy();
         df_rep5['Phi'] = 225 + df_rep5['Phi'];
         df_rep5['IsOriginal'] = False
+
+        # Réplica 6 (offset 270)
         df_rep6 = df.copy();
         df_rep6['Phi'] = 270 + df_rep6['Phi'];
         df_rep6['IsOriginal'] = False
+
+        # Réplica 7 (offset 315)
         df_rep7 = df.copy();
         df_rep7['Phi'] = 315 + df_rep7['Phi'];
         df_rep7['IsOriginal'] = False
 
+        # Agora, junte o 'df' original (bloco 1) com todas as 7 réplicas
         df = pd.concat([
-            df,
-            df_rep1, df_rep2, df_rep3, df_rep4, df_rep5, df_rep6, df_rep7
-        ]).reset_index(drop=True)
-    ### FIM DO NOVO BLOCO ###
+            df,  # Bloco 1 (76-120)
+            df_rep1,
+            df_rep2,
+            df_rep3,
+            df_rep4,
+            df_rep5,
+            df_rep6,
+            df_rep7
+        ], ignore_index=True)
 
     if phi_interval == 177:
         # (Sua lógica C2 original)
@@ -483,16 +495,26 @@ def process_file_for_plot(file_path, sigma=3, rotate_angle=0):
 
     return df, df_plot
 
-# Função para interpolar os dados
+
 def interpolate_data(df, resolution=1000):
-    # (Função mantida)
+    """
+    Interpola os dados para criar uma grade suave para o gráfico polar.
+    """
     phi = np.radians(df['Phi'])
     theta = np.radians(df['Theta'])
-    intensity = df['Smoothed_Intensity']  # Usar a intensidade suavizada
+
+    # --- CORREÇÃO 1: Usar a intensidade original ---
+    # Trocamos 'Smoothed_Intensity' por 'Intensity'
+    intensity = df['Intensity']
+
     phi_grid = np.linspace(np.min(phi), np.max(phi), resolution)
     theta_grid = np.linspace(np.min(theta), np.max(theta), resolution)
     phi_grid, theta_grid = np.meshgrid(phi_grid, theta_grid)
-    intensity_grid = griddata((phi, theta), intensity, (phi_grid, theta_grid), method='cubic')
+
+    # --- CORREÇÃO 2: Usar interpolação 'linear' ---
+    # 'cubic' é instável para dados esparsos. 'linear' é robusto.
+    intensity_grid = griddata((phi, theta), intensity, (phi_grid, theta_grid), method='linear')
+
     return phi_grid, theta_grid, intensity_grid
 
 
@@ -603,7 +625,7 @@ def save_to_txt_with_blocks(df, file_name):
 #    (Note que parâmetros como 'file_prefix', 'channel', 'thetai'
 #     não são mais usados, mas não causam mal)
 parametros = carregar_config('config.txt')
-
+arquivo_entrada = parametros["arquivo_entrada"]
 phii = parametros["phii"]
 phif = parametros["phif"]
 dphi = parametros["dphi"]
@@ -622,7 +644,8 @@ print("--- ETAPA 1: Iniciando cálculo do Chi ---")
 # ATENÇÃO: Definimos o arquivo de entrada manualmente
 #          para usar o C1 que acabamos de gerar.
 #          Mude para "C2", "C3" ou "C4" se desejar.
-input_file = "../saidatpintensity_C1.txt"
+input_file = arquivo_entrada
+print(f"Usando arquivo de entrada: {input_file}")
 
 # Arquivo de saída desta etapa (entrada para a próxima)
 output_file_chi = "../coeficientes_ajustados.txt"
@@ -673,7 +696,7 @@ print("--- ETAPA 3: Iniciando Plotagem e Salvamento Final ---")
 df, df_plot = process_file_for_plot(output_file_path_fft, 1, rotate_angle)
 
 # Plotar o gráfico polar
-plot_polar_interpolated(df_plot)
+#plot_polar_interpolated(df_plot)
 
 # Salvar o arquivo final no formato 'arquivo_saida' (ex: expGarotate.txt)
 save_to_txt_with_blocks(df, arquivo_saida)
