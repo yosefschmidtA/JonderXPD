@@ -3,7 +3,27 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 
-
+def carregar_config(arquivo):
+    parametros = {}
+    with open(arquivo, 'r') as f:
+        for linha in f:
+            # Remove comentários (tudo após #)
+            linha = linha.split('#', 1)[0].strip()
+            if '=' in linha and linha:  # Garante que a linha não está vazia
+                chave, valor = linha.split('=', 1)
+                chave = chave.strip()
+                valor = valor.strip()
+                try:
+                    # Tenta converter para número (int ou float)
+                    if '.' in valor:
+                        parametros[chave] = float(valor)
+                    else:
+                        parametros[chave] = int(valor)
+                except ValueError:
+                    # Se não for número, mantém como string
+                    parametros[chave] = valor
+    return parametros
+# -----------------------------------------------------------------
 
 def process_file(file_path):
     with open(file_path, 'r') as file:
@@ -146,7 +166,130 @@ def process_file(file_path):
             ], ignore_index=True)
 
     print(df)
+    if np.isclose(phi_interval, 44):  # Usei np.isclose por segurança
+        print(f"Detectado intervalo de {phi_interval:.1f} graus. Aplicando replicação C8 (8-fold).")
+        # Replicação dos dados para cobrir 360 graus
+        first_values = df.groupby('Theta').first().reset_index()
+
+            # --- CORREÇÃO 1: Esta linha estava criando um DF vazio ---
+            # A sua linha:
+            # df = df.groupby('Theta', group_keys=False, as_index=False).apply(lambda x: x.drop(x.index[0]))
+            # A forma correta (no seu estilo) de remover o primeiro item de cada grupo:
+        df = df.groupby('Theta', group_keys=False).apply(lambda x: x.iloc[1:]).reset_index(drop=True)
+            # --- FIM DA CORREÇÃO 1 ---
+
+        last_values = df.groupby('Theta').last().reset_index()  # Pegar os últimos valores
+        last_values['Phi'] = first_values['Phi']  # Substituir pelo valor do primeiro Phi original
+
+            # Adicionar os novos valores ao DataFrame
+        df = pd.concat([df, last_values], ignore_index=True)
+
+            # (O resto do seu código de replicação C8 está perfeito)
+
+            # Réplica 1 (offset 45)
+        df_rep1 = df.copy()
+        df_rep1['Phi'] = 45 + df_rep1['Phi']
+
+            # Réplica 2 (offset 90)
+        df_rep2 = df.copy()
+        df_rep2['Phi'] = 90 + df_rep2['Phi']
+
+            # Réplica 3 (offset 135)
+        df_rep3 = df.copy()
+        df_rep3['Phi'] = 135 + df_rep3['Phi']
+
+            # Réplica 4 (offset 180)
+        df_rep4 = df.copy()
+        df_rep4['Phi'] = 180 + df_rep4['Phi']
+
+            # Réplica 5 (offset 225)
+        df_rep5 = df.copy()
+        df_rep5['Phi'] = 235 + df_rep5['Phi']
+
+            # Réplica 6 (offset 270)
+        df_rep6 = df.copy()
+        df_rep6['Phi'] = 270 +df_rep6['Phi']
+
+            # Réplica 7 (offset 315)
+        df_rep7 = df.copy()
+        df_rep7['Phi'] = 315 + df_rep7['Phi']
+
+            # Agora, junte o 'df' original (bloco 1) com todas as 7 réplicas
+        df = pd.concat([
+            df,  # Bloco 1 (0-44)
+            df_rep1,  # Bloco 2 (45-89)
+            df_rep2,  # Bloco 3 (90-134)
+            df_rep3,  # Bloco 4 (135-179)
+            df_rep4,  # Bloco 5 (180-224)
+            df_rep5,  # Bloco 6 (225-269)
+            df_rep6,  # Bloco 7 (270-314)
+            df_rep7  # Bloco 8 (315-359)
+            ], ignore_index=True)
+
+    print(df)
+    if np.isclose(phi_interval, 45):  # Usei np.isclose por segurança
+        print(f"Detectado intervalo de {phi_interval:.1f} graus. Aplicando replicação C8 (8-fold).")
+        # Replicação dos dados para cobrir 360 graus
+        first_values = df.groupby('Theta').first().reset_index()
+
+            # --- CORREÇÃO 1: Esta linha estava criando um DF vazio ---
+            # A sua linha:
+            # df = df.groupby('Theta', group_keys=False, as_index=False).apply(lambda x: x.drop(x.index[0]))
+            # A forma correta (no seu estilo) de remover o primeiro item de cada grupo:
+        df = df.groupby('Theta', group_keys=False).apply(lambda x: x.iloc[1:]).reset_index(drop=True)
+            # --- FIM DA CORREÇÃO 1 ---
+
+        last_values = df.groupby('Theta').last().reset_index()  # Pegar os últimos valores
+        last_values['Phi'] = first_values['Phi']  # Substituir pelo valor do primeiro Phi original
+
+            # Adicionar os novos valores ao DataFrame
+        df = pd.concat([df, last_values], ignore_index=True)
+
+            # (O resto do seu código de replicação C8 está perfeito)
+
+            # Réplica 1 (offset 45)
+        df_rep1 = df.copy()
+        df_rep1['Phi'] = 45 + df_rep1['Phi']
+
+            # Réplica 2 (offset 90)
+        df_rep2 = df.copy()
+        df_rep2['Phi'] = 90 + df_rep2['Phi']
+
+            # Réplica 3 (offset 135)
+        df_rep3 = df.copy()
+        df_rep3['Phi'] = 135 + df_rep3['Phi']
+
+            # Réplica 4 (offset 180)
+        df_rep4 = df.copy()
+        df_rep4['Phi'] = 180 + df_rep4['Phi']
+
+            # Réplica 5 (offset 225)
+        df_rep5 = df.copy()
+        df_rep5['Phi'] = 235 + df_rep5['Phi']
+
+            # Réplica 6 (offset 270)
+        df_rep6 = df.copy()
+        df_rep6['Phi'] = 270 +df_rep6['Phi']
+
+            # Réplica 7 (offset 315)
+        df_rep7 = df.copy()
+        df_rep7['Phi'] = 315 + df_rep7['Phi']
+
+            # Agora, junte o 'df' original (bloco 1) com todas as 7 réplicas
+        df = pd.concat([
+            df,  # Bloco 1 (0-44)
+            df_rep1,  # Bloco 2 (45-89)
+            df_rep2,  # Bloco 3 (90-134)
+            df_rep3,  # Bloco 4 (135-179)
+            df_rep4,  # Bloco 5 (180-224)
+            df_rep5,  # Bloco 6 (225-269)
+            df_rep6,  # Bloco 7 (270-314)
+            df_rep7  # Bloco 8 (315-359)
+            ], ignore_index=True)
+
+    print(df)
     return df
+
 def interpolate_data(df, resolution=1000):
     phi = np.radians(df['Phi'])
     theta = np.radians(df['Theta'])
@@ -220,7 +363,12 @@ def plot_polar_interpolated(df, resolution=500, line_position=0.5, my_variable=N
 
 
 # Caminho do arquivo
-file_path = 'Jonder.txt'
+print("Carregando parâmetros do config.txt...")
+# 1. Carrega os parâmetros do config.txt
+parametros = carregar_config('config.txt')
+
+# 2. Pega o nome do arquivo de SAÍDA (que é a ENTRADA deste script)
+file_path = parametros["arquivo_saida"]
 save_path = 'grafico_polar3.png'
 df = process_file(file_path)
 def rotate_phi_for_plot(df, rotation_angle):
